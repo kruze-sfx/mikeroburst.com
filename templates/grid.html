@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>mikeroburst.com photos</title>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet'>
+    <link rel="stylesheet" href="{{ url_for('static', filename='grid.css') }}">
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-first-line">
+            <span class="navbar-title-text">
+                <a href="{{ url_for('photos') }}">mikeroburst.com photos</a>
+            </span>
+            <span class="navbar-title-image">
+                title image goes here
+            </span>
+        </div>
+        <div class="navbar-second-line">
+            <span class="navbar-breadcrumb">
+                breadcrumb goes here
+            </span>
+            <span class="navbar-search">
+                search goes here
+            </span>
+        </div>
+    </div>
+
+    <!-- Begin photoswipe imports -->
+
+    <!-- Core CSS file -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='photoswipe/photoswipe.css') }}">
+
+    <!-- Skin CSS file (styling of UI - buttons, caption, etc.) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='photoswipe/default-skin.css') }}">
+
+    <!-- Core JS file -->
+    <script src="{{ url_for('static', filename='photoswipe/photoswipe.min.js') }}"></script>
+
+    <!-- UI JS file -->
+    <script src="{{ url_for('static', filename='photoswipe/photoswipe-ui-default.min.js') }}"></script>
+
+    <!-- End photoswipe imports -->
+
+
+    <!-- Include pig (progressive image grid) libraries -->
+    <div class="pig-wrapper">
+        <div id="pig"></div>
+    </div>
+    <script type="text/javascript" src="{{ url_for('static', filename='pig.js') }}"></script>
+
+    <!-- Container for the photoswipe lightbox -->
+    <div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="pswp__bg"></div>
+        <div class="pswp__scroll-wrap">
+
+            <div class="pswp__container">
+                <div class="pswp__item"></div>
+                <div class="pswp__item"></div>
+                <div class="pswp__item"></div>
+            </div>
+
+            <div class="pswp__ui pswp__ui--hidden">
+                <div class="pswp__top-bar">
+                    <div class="pswp__counter"></div>
+                    <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+                    <button class="pswp__button pswp__button--share" title="Share"></button>
+                    <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+                    <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+                    <div class="pswp__preloader">
+                        <div class="pswp__preloader__icn">
+                          <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                          </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                    <div class="pswp__share-tooltip"></div>
+                </div>
+                <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+                </button>
+                <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+                </button>
+                <div class="pswp__caption">
+                    <div class="pswp__caption__center"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional helper functions used below -->
+    <script src="{{ url_for('static', filename='photos.js') }}"></script>
+
+    <!-- Logic to create the objects needed for pig and photoswipe -->
+    <script type="text/javascript">
+        // The global map containing all information for the grid and lightbox
+        var url = "{{ url_for('get_path_contents', user_path=user_path) }}";
+        var pathContents = getPathContents(url);
+
+        // The lightbox
+        var pswpElement = document.querySelectorAll('.pswp')[0];
+        var pswpItems = pathContents.lightbox;
+        var pswpUI = PhotoSwipeUI_Default;
+
+        // If the URL contains a direct link to an image, display the lightbox
+        // immediately with that image.
+        var hashData = photoswipeParseHash();
+        if (hashData.pid && hashData.gid) {
+            console.log("Opening lightbox with direct link")
+            var options = {
+                index: getIndexOfPid(pswpItems, hashData.pid),
+                history: true,
+                galleryPIDs: true,
+            };
+            var lightbox = new PhotoSwipe(pswpElement, pswpUI, pswpItems, options);
+            lightbox.init();
+        }
+
+        // The image grid
+        var pigOptions = {
+            getImageSize: function(lastWindowWidth) {
+                if (lastWindowWidth <= 640)
+                    return 250;
+                else if (lastWindowWidth <= 1920)
+                    return 500;
+                else
+                    return 500;
+            },
+            getMinAspectRatio: function(lastWindowWidth) {
+                if (lastWindowWidth <= 640)
+                    return 2;
+                else if (lastWindowWidth <= 1280)
+                    return 3;
+                else if (lastWindowWidth <= 1920)
+                    return 3;
+                else
+                    return 4;
+            },
+        };
+        var pig = new Pig(pathContents.grid, pigOptions, pswpElement,
+                          pswpItems, PhotoSwipeUI_Default).enable();
+
+    </script>
+
+</body>
+</html>
