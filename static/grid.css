@@ -1,5 +1,12 @@
+html {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 body {
    background-color: #303030;
+   max-width: 100%;
+   overflow-x: hidden;
 }
 
 a:link {
@@ -33,7 +40,7 @@ a:active {
     height: 20px;
     width: 100%;
     padding: 10px;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
 }
 
 .navbar-title-text {
@@ -57,10 +64,11 @@ a:active {
 
 .navbar-breadcrumb {
     font-family: 'Open Sans', sans-serif;
-    font-size: 1.0vw;
+    font-size: 10px;
     color: #EEEEEE;
     text-decoration: none;
     width: 50%;
+    float: left;
 }
 
 .navbar-search {
@@ -86,7 +94,7 @@ a:active {
 
 .dir-tile-info-text {
     text-align: left;
-    font-size: 1.5vw;
+    font-size: 18px;
     font-weight: 300;
     display: inline-block;
     padding-left: .2em;
@@ -103,6 +111,39 @@ a:active {
 }
 
 .dir-tile-info-icon {
-    font-size: 1.4vw;
+    font-size: 16px;
     color: #EEEEEE;
+}
+
+/* Style the list */
+ul.breadcrumb {
+    list-style: none;
+    padding-left: 0px;
+    -webkit-margin-before: 0px;
+    -webkit-margin-after: 0px;
+    -webkit-margin-start: 0px;
+    -webkit-margin-end: 0px;
+    -webkit-padding-start: 0px;
+}
+
+/* Display list items side by side */
+ul.breadcrumb li {
+    display: inline;
+    font-size: 18px;
+}
+
+/* Add a slash symbol (/) after each list item */
+ul.breadcrumb li+li:before {
+    padding: 8px;
+    content: "\003E";
+}
+
+/* Hide decoration on breadcrumb links */
+ul.breadcrumb li a {
+    text-decoration: none;
+}
+
+/* Add an underline on mouse-over */
+ul.breadcrumb li a:hover {
+    text-decoration: underline;
 }
