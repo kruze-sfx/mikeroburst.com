@@ -10,24 +10,24 @@ function photoswipeParseHash() {
     var hash = window.location.hash.substring(1),
     params = {};
 
-    if(hash.length < 5) {
+    if (hash.length < 5) {
         return params;
     }
 
     var vars = hash.split('&');
     for (var i = 0; i < vars.length; i++) {
-        if(!vars[i]) {
+        if (!vars[i]) {
             continue;
         }
         var pair = vars[i].split('=');
-        if(pair.length < 2) {
+        if (pair.length < 2) {
             continue;
         }
         // pair[0] == "gid" or "pid"
         // pair[1] == the value for "gid" or "pid"
         params[pair[0]] = pair[1];
     }
-    if(params.gid) {
+    if (params.gid) {
         params.gid = parseInt(params.gid, 10);
     }
 
@@ -41,8 +41,8 @@ function photoswipeParseHash() {
  */
 function getIndexOfPid(pswpItems, pid) {
     var index = 0;
-    for(var j = 0; j < pswpItems.length; j++) {
-        if(pswpItems[j].pid == pid) {
+    for (var j = 0; j < pswpItems.length; j++) {
+        if (pswpItems[j].pid == pid) {
             index = j;
             break;
         }
@@ -64,9 +64,36 @@ function getPathContents(url) {
 
 
 /**
- * Generate breadcrumb links for a path by splitting it on forward slashes.
+ * Generate breadcrumb links for a path by splitting it on forward slashes.\
+ * Puts the breadcrumbs in the supplied UL element.
  */
-function getBreadcrumbs(url) {
-    var aCrumbs = url.split("/")
-    
+function setBreadcrumbs(url, ulElement) {
+    var accumUrl = "";
+    // Bit of a hack to handle the single-slash URL
+    var aCrumbs;
+    if (url == "/") {
+        aCrumbs = [""];
+    } else {
+        var aCrumbs = url.split("/");
+    }
+    for (var i = 0; i < aCrumbs.length; i++) {
+        var crumb = aCrumbs[i];
+        console.log("crumb = " + crumb);
+        var crumbText;
+        if (crumb == "") {
+            crumbText = "Photos";
+            accumUrl += "/photos";
+        } else {
+            crumbText = crumb;
+            accumUrl += "/" + crumbText;
+        }
+        console.log("crumbText = " + crumbText);
+        console.log("accumUrl = " + accumUrl);
+        li = document.createElement("li");
+        link = document.createElement("a");
+        link.href = accumUrl;
+        link.innerText = crumbText;
+        li.appendChild(link);
+        ulElement.appendChild(li);
+    }
 }

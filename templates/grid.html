@@ -14,17 +14,13 @@
             <span class="navbar-title-text">
                 <a href="{{ url_for('photos') }}">mikeroburst.com photos</a>
             </span>
-            <span class="navbar-title-image">
-                title image goes here
-            </span>
+            <span class="navbar-title-image">title image goes here</span>
         </div>
         <div class="navbar-second-line">
             <span class="navbar-breadcrumb">
-                breadcrumb goes here
+                <ul id="breadcrumb" class="breadcrumb"></ul>
             </span>
-            <span class="navbar-search">
-                search goes here
-            </span>
+            <span class="navbar-search"></span>
         </div>
     </div>
 
@@ -143,6 +139,9 @@
         var pig = new Pig(pathContents.grid, pigOptions, pswpElement,
                           pswpItems, PhotoSwipeUI_Default).enable();
 
+        // Set the breadcrumbs
+        var breadcrumbElement = document.getElementById("breadcrumb");
+        setBreadcrumbs(pathContents["user_path"], breadcrumbElement);
     </script>
 
 </body>
