@@ -58,10 +58,13 @@ def find_original(icon_file):
     # same created date
     dir_name = os.path.dirname(icon_file) or '.'
     walk_iter = os.walk(dir_name)
-    _, _, files = next(walk_iter)
+    try:
+        _, _, files = next(walk_iter)
+    except StopIteration:
+        return None
     for f in files:
         candidate = os.path.join(dir_name, f)
-        if candidate == icon_file:
+        if candidate == icon_file or f.startswith('.'):
             continue
         #print("Checking {}".format(candidate))
         if does_match(candidate, icon_created):
