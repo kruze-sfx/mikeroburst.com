@@ -1,21 +1,15 @@
 import json
 import os
-import sys
 import urllib.parse
 
-from flask import Flask, Request, Response, g, render_template, send_from_directory
+from flask import Flask, Request, Response, g, render_template, send_from_directory  # noqa
 
 import db_utils.query as query
-
-INTERP = os.path.join(os.environ['HOME'], 'preview.mikeroburst.com', 'venv', 'bin', 'python')  # noqa
-if sys.executable != INTERP:
-    os.execl(INTERP, INTERP, *sys.argv)
-sys.path.append(os.getcwd())
 
 app = Flask(__name__)
 
 # TODO: Get the root from external config
-app.config['PHOTOS_ROOT'] = os.path.join(os.environ['HOME'], 'mikeroburst.com', 'pics', 'albums')
+app.config['PHOTOS_ROOT'] = os.path.join(os.environ['HOME'], 'mikeroburst.com', 'pics', 'albums')  # noqa
 
 
 @app.route('/photos', strict_slashes=False)
