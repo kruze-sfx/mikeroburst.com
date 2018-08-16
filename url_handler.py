@@ -7,7 +7,7 @@ from flask import Flask, Request, Response, g, render_template, send_from_direct
 
 import db_utils.query as query
 
-INTERP = os.path.join(os.environ['HOME'], 'git', 'scratch', 'preview.mikeroburst.com', 'bin', 'python')  # noqa
+INTERP = os.path.join(os.environ['HOME'], 'preview.mikeroburst.com', 'venv', 'bin', 'python')  # noqa
 if sys.executable != INTERP:
     os.execl(INTERP, INTERP, *sys.argv)
 sys.path.append(os.getcwd())
@@ -15,7 +15,7 @@ sys.path.append(os.getcwd())
 app = Flask(__name__)
 
 # TODO: Get the root from external config
-app.config['PHOTOS_ROOT'] = '/Users/kruze/git/scratch/preview.mikeroburst.com/test_pics'
+app.config['PHOTOS_ROOT'] = os.path.join(os.environ['HOME'], 'mikeroburst.com', 'pics', 'albums')
 
 
 @app.route('/photos', strict_slashes=False)
