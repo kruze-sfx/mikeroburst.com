@@ -2,9 +2,9 @@ DROP TABLE IF EXISTS photos;
 DROP TABLE IF EXISTS dirs;
 
 CREATE TABLE photos (
-    path VARCHAR(256),
-    user_path VARCHAR(256),
-    filename VARCHAR(256),
+    path VARCHAR(254),
+    user_path VARCHAR(254),
+    filename VARCHAR(254),
     url VARCHAR(512),
     thumb_20_url VARCHAR(512),
     thumb_100_url VARCHAR(512),
@@ -30,11 +30,11 @@ CREATE TABLE photos (
 CREATE INDEX photos_by_user_path ON photos(`user_path`);
 
 CREATE TABLE dirs (
-    path VARCHAR(256),
-    user_path VARCHAR(256),
-    parent_user_path VARCHAR(256),
-    name VARCHAR(256),
-    url VARCHAR(256),
+    path VARCHAR(254),
+    user_path VARCHAR(254),
+    parent_user_path VARCHAR(254),
+    name VARCHAR(254),
+    url VARCHAR(254),
     thumb_20_url VARCHAR(512),
     thumb_100_url VARCHAR(512),
     thumb_250_url VARCHAR(512),
