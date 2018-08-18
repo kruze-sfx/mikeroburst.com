@@ -37,7 +37,10 @@ def _exif_val(tags, key, default=None, index=None):
 def get_created_date(filename):
     with open(filename, 'rb') as f:
         tags = exifread.process_file(f)
-    return _exif_val(tags, 'EXIF DateTimeOriginal', '')
+    if not tags:
+        return None
+    else:
+        return _exif_val(tags, 'EXIF DateTimeOriginal', '')
 
 
 def does_match(candidate, icon_created):
@@ -46,13 +49,17 @@ def does_match(candidate, icon_created):
     #    print("original {} == candidate {}".format(icon_created, candidate_created))
     #else:
     #    print("original {} != candidate {}".format(icon_created, candidate_created))
-
-    return candidate_created == icon_created
+    if candidate_created is None:
+        return False
+    else:
+        return candidate_created == icon_created
 
 
 def find_original(icon_file):
     # Get the created date of the original icon file
     icon_created = get_created_date(icon_file)
+    if icon_created is None:
+        return None  # Don't try to guess a match if there's no exif.
 
     # Scan the other files in the same directory and find one with the exact
     # same created date
@@ -66,7 +73,7 @@ def find_original(icon_file):
         candidate = os.path.join(dir_name, f)
         if candidate == icon_file or f.startswith('.'):
             continue
-        #print("Checking {}".format(candidate))
+        print("Checking {}".format(candidate))
         if does_match(candidate, icon_created):
             return candidate
     # If we got this far, there's no match
