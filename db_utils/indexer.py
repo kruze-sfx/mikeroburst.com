@@ -8,6 +8,7 @@ import os
 
 import exifread
 import MySQLdb
+from PIL import Image as PILImage
 
 import db_utils.record_types as record_types
 
@@ -24,8 +25,7 @@ UNDEFINED_STR = 'Unavailable'
 PHOTO_URL_ROOT = '/photo'
 DIR_URL_ROOT = '/photos'
 USER_ROOT = '/'
-DEFAULT_THUMB_URL = '/static/default_thumbnails'
-DEFAULT_THUMB_DISK_PATH = 'static/default_thumbnails'  # TODO: Make this not hard-coded
+DEFAULT_ASPECT_RATIO = 4.0 / 3.0
 
 EXCLUDE_DIRS = frozenset((THUMBS_DIR,))
 
@@ -87,7 +87,7 @@ def index_dir(db, root, dirpath, dirnames, filenames):
     # Index the directory itself
     num_subdirs = len([d for d in dirnames if not d.endswith(THUMBS_DIR)])
     user_path = dirpath.lstrip(root)
-    thumb_urls = get_dir_thumb_urls(dirpath, user_path)
+    thumb_urls = get_dir_thumb_urls(user_path)
     width, height, aspect_ratio = get_dir_thumbnail_dimensions(dirpath)
     # num_photos is not a recursive sum (though maybe it should be)
     num_photos = len([f for f in filenames if f != ICON_FILE])
@@ -126,11 +126,10 @@ def index_photo(db, root, dirpath, filename):
     user_path = dirpath.lstrip(root)
 
     exif = get_exif(path)
-    thumb_urls = get_photo_thumb_urls(dirpath, user_path, filename)
+    thumb_urls = get_photo_thumb_urls(user_path, filename)
 
     # Format the modified time as a sql datetime
     modified_dt = _convert_epoch_timestamp(os.path.getmtime(path))
-
     photo = record_types.Photo(
         path=path,
         user_path=user_path,
@@ -178,31 +177,26 @@ def get_dir_url(user_path):
     return os.path.join(DIR_URL_ROOT, user_path.lstrip('/'))
 
 
-def get_photo_thumb_urls(dirpath, user_path, filename):
+def get_photo_thumb_urls(user_path, filename):
     res = []
     for size in THUMB_SIZES:
-        res.append(get_thumb_url(dirpath, user_path, filename, size))
+        res.append(get_thumb_url(user_path, filename, size))
     return res
 
 
-def get_dir_thumb_urls(dirpath, user_path):
+def get_dir_thumb_urls(user_path):
     res = []
     for size in THUMB_SIZES:
-        res.append(get_thumb_url(dirpath, user_path, ICON_FILE, size))
+        res.append(get_thumb_url(user_path, ICON_FILE, size))
     return res
 
 
-def get_thumb_url(dirpath, user_path, filename, size):
+def get_thumb_url(user_path, filename, size):
     """
     Gets a URL for the thumbnail of a given photo filename and size
     """
-    on_disk_thumb_file = os.path.join(dirpath, THUMBS_DIR, size, filename)
-    if os.path.exists(on_disk_thumb_file):
-        url = os.path.join(PHOTO_URL_ROOT, user_path.lstrip('/'), THUMBS_DIR,
-                           size, filename)
-    else:
-        url = os.path.join(DEFAULT_THUMB_URL, size, filename)
-    return url
+    return os.path.join(PHOTO_URL_ROOT, user_path.lstrip('/'), THUMBS_DIR,
+                        str(size), filename)
 
 
 def get_dir_thumb_file(dirpath, size):
@@ -210,11 +204,7 @@ def get_dir_thumb_file(dirpath, size):
     Gets the path to a filename for a directory icon. Returns the actual
     on-disk path that can be accessed by python.
     """
-    thumb_file = os.path.join(dirpath, THUMBS_DIR, size, ICON_FILE)
-    if os.path.exists(thumb_file):
-        return thumb_file
-    else:
-        return os.path.join(DEFAULT_THUMB_DISK_PATH, size, ICON_FILE)
+    return os.path.join(dirpath, THUMBS_DIR, str(size), ICON_FILE)
 
 
 def get_dir_thumbnail_dimensions(dirpath):
@@ -223,10 +213,13 @@ def get_dir_thumbnail_dimensions(dirpath):
     we need to know the dimensions and aspect ratio of the thumbnail.
     """
     # Use the largest thumbnail size to calculate the aspect ratio.
-    size = THUMB_SIZES[-1]
+    size = int(THUMB_SIZES[-1])
     thumb_file = get_dir_thumb_file(dirpath, size)
-    exif = get_exif(thumb_file)
-    return exif.width, exif.height, (exif.width / exif.height)
+    if os.path.exists(thumb_file):
+        exif = get_exif(thumb_file)
+        return exif.width, exif.height, (exif.width / exif.height)
+    else:
+        return (size * DEFAULT_ASPECT_RATIO), size, DEFAULT_ASPECT_RATIO
 
 
 def get_parent_dir(user_path):
@@ -234,6 +227,11 @@ def get_parent_dir(user_path):
         return None
     else:
         return os.path.dirname(user_path)
+
+
+def get_size_from_pillow(path):
+    image = PILImage.open(path)
+    return image.size
 
 
 def _exif_val(tags, key, default=None, index=None):
@@ -250,8 +248,15 @@ def get_exif(path):
     """Returns an Exif namedtuple of exif data in an image"""
     with open(path, 'rb') as f:
         tags = exifread.process_file(f)
-    width = _exif_val(tags, 'EXIF ExifImageWidth', UNDEFINED_INT, 0)
-    height = _exif_val(tags, 'EXIF ExifImageLength', UNDEFINED_STR, 0)
+
+    # We need at least width and height to be able to render the image grid
+    # correctly. If width and height aren't present in EXIF, then fall back
+    # to using the Pillow library instead.
+    if 'EXIF ExifImageWidth' in tags and 'EXIF ExifImageLength' in tags:
+        width = _exif_val(tags, 'EXIF ExifImageWidth', UNDEFINED_INT, 0)
+        height = _exif_val(tags, 'EXIF ExifImageLength', UNDEFINED_STR, 0)
+    else:
+        width, height = get_size_from_pillow(path)
     created = _exif_val(tags, 'EXIF DateTimeOriginal', UNDEFINED_STR)
     camera_make = _exif_val(tags, 'Image Make', UNDEFINED_STR)
     camera_model = _exif_val(tags, 'Image Model', UNDEFINED_STR)
