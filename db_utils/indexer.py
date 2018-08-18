@@ -30,20 +30,20 @@ DEFAULT_ASPECT_RATIO = 4.0 / 3.0
 EXCLUDE_DIRS = frozenset((THUMBS_DIR,))
 
 INDEX_PHOTO_STATEMENT = """INSERT INTO {}
-    (path, user_path, filename, url, thumb_20_url, thumb_100_url,
+    (user_path, filename, url, thumb_20_url, thumb_100_url,
      thumb_250_url, thumb_500_url, created_time, width, height, aspect_ratio,
      size, modified_time, exif_fstop, exif_focal_length, exif_iso,
      exif_shutter_speed, exif_camera, exif_lens, exif_gps_lat, exif_gps_lon,
      exif_gps_alt_ft)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
             %s, %s, %s, %s, %s, %s, %s)
     """
 
 INDEX_DIR_STATEMENT = """INSERT INTO {}
-    (path, user_path, parent_user_path, name, url, thumb_20_url, thumb_100_url,
+    (user_path, parent_user_path, name, url, thumb_20_url, thumb_100_url,
      thumb_250_url, thumb_500_url, width, height, aspect_ratio, created_time,
      modified_time, num_subdirs, num_photos)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
 
 
@@ -92,7 +92,6 @@ def index_dir(db, root, dirpath, dirnames, filenames):
     # num_photos is not a recursive sum (though maybe it should be)
     num_photos = len([f for f in filenames if f != ICON_FILE])
     dir_obj = record_types.Dir(
-        path=dirpath,
         user_path=user_path,
         parent_user_path=get_parent_dir(user_path),
         name=os.path.basename(dirpath),
@@ -131,7 +130,6 @@ def index_photo(db, root, dirpath, filename):
     # Format the modified time as a sql datetime
     modified_dt = _convert_epoch_timestamp(os.path.getmtime(path))
     photo = record_types.Photo(
-        path=path,
         user_path=user_path,
         filename=filename,
         url=get_image_url(user_path, filename),

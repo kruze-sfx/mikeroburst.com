@@ -2,7 +2,6 @@ DROP TABLE IF EXISTS photos;
 DROP TABLE IF EXISTS dirs;
 
 CREATE TABLE photos (
-    path VARCHAR(254),
     user_path VARCHAR(254),
     filename VARCHAR(254),
     url VARCHAR(512),
@@ -25,12 +24,11 @@ CREATE TABLE photos (
     exif_gps_lat VARCHAR(64),
     exif_gps_lon VARCHAR(64),
     exif_gps_alt_ft VARCHAR(8),
-    PRIMARY KEY (path, filename)
+    PRIMARY KEY (user_path, filename)
 );
 CREATE INDEX photos_by_user_path ON photos(`user_path`);
 
 CREATE TABLE dirs (
-    path VARCHAR(254),
     user_path VARCHAR(254),
     parent_user_path VARCHAR(254),
     name VARCHAR(254),
@@ -46,6 +44,6 @@ CREATE TABLE dirs (
     modified_time DATETIME,
     num_subdirs INT,
     num_photos INT,
-    PRIMARY KEY (path)
+    PRIMARY KEY (user_path)
 );
 CREATE INDEX dirs_by_user_path ON dirs(`user_path`);
