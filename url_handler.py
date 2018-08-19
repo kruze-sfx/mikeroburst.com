@@ -60,6 +60,7 @@ def photo(filename):
     webpics/albums/2017/foo.jpg
     """
     filename = urllib.parse.unquote(filename)
+    print("Sending: {}".format(filename))
     return send_from_directory(app.config['PHOTOS_ROOT'], filename)
 
 
@@ -94,3 +95,16 @@ def close_db(error):
     """Closes the database again at the end of the request."""
     if hasattr(g, 'querier'):
         g.querier.close()
+
+
+@app.errorhandler(Exception)
+def all_exception_handler(error):
+    """
+    Adds a catch-all exception handler to prevent passenger from crashing
+    when an unhandled exception is raised.
+
+    TODO: Render the exception using a jinja template.
+    :param error:
+    :return:
+    """
+    return str(error), 500

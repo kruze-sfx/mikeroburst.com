@@ -84,6 +84,8 @@ def index_dir(db, root, dirpath, dirnames, filenames):
     if not user_path.startswith('/'):
         user_path = "/{}".format(user_path)
 
+    print("Indexing {}".format(user_path))
+
     # Index all non-thumbnail photos
     for filename in filenames:
         index_photo(db, user_path, dirpath, filename)
