@@ -77,16 +77,19 @@ def index_dir(db, root, dirpath, dirnames, filenames):
 
     dirpath = path = "/photos/albums/2017/2017 08-19 Yosemite"
     root = "/photos/albums"
-    user_path = "2017/2017 08-19 Yosemite"
+    user_path = "/2017/2017 08-19 Yosemite"
     name = "2017 08-19 Yosemite"
     """
+    user_path = dirpath.lstrip(root)
+    if not user_path.startswith('/'):
+        user_path = "/{}".format(user_path)
+
     # Index all non-thumbnail photos
     for filename in filenames:
-        index_photo(db, root, dirpath, filename)
+        index_photo(db, user_path, dirpath, filename)
 
     # Index the directory itself
     num_subdirs = len([d for d in dirnames if not d.endswith(THUMBS_DIR)])
-    user_path = dirpath.lstrip(root)
     thumb_urls = get_dir_thumb_urls(user_path)
     width, height, aspect_ratio = get_dir_thumbnail_dimensions(dirpath)
     # num_photos is not a recursive sum (though maybe it should be)
@@ -111,7 +114,7 @@ def index_dir(db, root, dirpath, dirnames, filenames):
     db.execute(INDEX_DIR_STATEMENT.format(DIRS_TABLE), dir_obj)
 
 
-def index_photo(db, root, dirpath, filename):
+def index_photo(db, user_path, dirpath, filename):
     # Don't index icons
     if filename == ICON_FILE:
         return
@@ -122,7 +125,6 @@ def index_photo(db, root, dirpath, filename):
     # The "path" includes the root and points to the actual file on disk.
     # The "user_path" is what appears to the user and the breadcrumb hierarchy.
     path = os.path.join(dirpath, filename)
-    user_path = dirpath.lstrip(root)
 
     exif = get_exif(path)
     thumb_urls = get_photo_thumb_urls(user_path, filename)
