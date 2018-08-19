@@ -8,8 +8,12 @@ import db_utils.query as query
 
 app = Flask(__name__)
 
-# TODO: Get the root from external config
+# TODO: Get all these from external config
 app.config['PHOTOS_ROOT'] = os.path.join(os.environ['HOME'], 'mikeroburst.com', 'pics', 'albums')  # noqa
+DB_USER = 'readonly_user'
+DB_HOST = 'mysql.mikeroburst.com'
+DB_PASSWORD = '30N@Nimciw0YsnSanSMI'  # Read-only access
+DB_NAME = 'mikeroburst_photos'
 
 
 @app.route('/photos', strict_slashes=False)
@@ -77,12 +81,7 @@ def format_user_path(user_path, leading_slash=True):
 
 def get_querier():
     if not hasattr(g, 'querier'):
-        host = os.environ['PHOTOS_DB_HOST']
-        user = os.environ['PHOTOS_DB_USER']
-        password = os.environ['PHOTOS_DB_PASSWORD']
-        db = os.environ['PHOTOS_DB_NAME']
-
-        querier = query.Querier(host, user, password, db)
+        querier = query.Querier(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME)
         querier.connect()
         g.querier = querier
         return querier
