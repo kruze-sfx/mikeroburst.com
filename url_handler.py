@@ -1,19 +1,18 @@
 import json
-import os
 import urllib.parse
 
-from flask import Flask, Request, Response, g, render_template, send_from_directory  # noqa
+from flask import Flask, Response, g, render_template, send_from_directory
+from werkzeug.exceptions import NotFound
 
 import db_utils.query as query
+try:
+    from config import photos_root, db_host, db_user, db_name, db_password
+except ImportError:
+    raise ValueError("photos_root, db_host, db_user, db_name, db_password "
+                     "must all be defined in a local file named config.py")
 
 app = Flask(__name__)
-
-# TODO: Get all these from external config
-app.config['PHOTOS_ROOT'] = os.path.join(os.environ['HOME'], 'mikeroburst.com', 'pics', 'albums')  # noqa
-DB_USER = 'readonly_user'
-DB_HOST = 'mysql.mikeroburst.com'
-DB_PASSWORD = '30N@Nimciw0YsnSanSMI'  # Read-only access
-DB_NAME = 'mikeroburst_photos'
+app.config['PHOTOS_ROOT'] = photos_root
 
 
 @app.route('/photos', strict_slashes=False)
@@ -60,7 +59,6 @@ def photo(filename):
     webpics/albums/2017/foo.jpg
     """
     filename = urllib.parse.unquote(filename)
-    print("Sending: {}".format(filename))
     return send_from_directory(app.config['PHOTOS_ROOT'], filename)
 
 
@@ -82,7 +80,7 @@ def format_user_path(user_path, leading_slash=True):
 
 def get_querier():
     if not hasattr(g, 'querier'):
-        querier = query.Querier(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME)
+        querier = query.Querier(db_host, db_user, db_password, db_name)
         querier.connect()
         g.querier = querier
         return querier
@@ -97,6 +95,16 @@ def close_db(error):
         g.querier.close()
 
 
+@app.errorhandler(NotFound)
+def all_exception_handler(error):
+    """
+    Exception handler for 404 not found.
+
+    TODO: Render the exception using a jinja template.
+    """
+    return str(error), 404
+
+
 @app.errorhandler(Exception)
 def all_exception_handler(error):
     """
@@ -104,7 +112,5 @@ def all_exception_handler(error):
     when an unhandled exception is raised.
 
     TODO: Render the exception using a jinja template.
-    :param error:
-    :return:
     """
     return str(error), 500

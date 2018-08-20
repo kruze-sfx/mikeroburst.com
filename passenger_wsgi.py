@@ -1,9 +1,13 @@
 import os
 import sys
 
-INTERP = os.path.join(os.environ['HOME'], 'preview.mikeroburst.com', 'venv', 'bin', 'python')  # noqa
-if sys.executable != INTERP:
-    os.execl(INTERP, INTERP, *sys.argv)
+try:
+    from config import interp
+except ImportError:
+    raise ValueError("Must define interp in a local file named config.py")
+
+if sys.executable != interp:
+    os.execl(interp, interp, *sys.argv)
 sys.path.append(os.getcwd())
 
 from url_handler import app as application  # noqa

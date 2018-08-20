@@ -1,5 +1,9 @@
 # Custom paths
 test_pics/
+config.py
+.idea/
+passenger.3000.pid
+passenger.3000.pid.lock
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
