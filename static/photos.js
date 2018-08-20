@@ -78,7 +78,6 @@ function setBreadcrumbs(url, ulElement) {
     }
     for (var i = 0; i < aCrumbs.length; i++) {
         var crumb = aCrumbs[i];
-        console.log("crumb = " + crumb);
         var crumbText;
         if (crumb == "") {
             crumbText = "Photos";
@@ -87,8 +86,6 @@ function setBreadcrumbs(url, ulElement) {
             crumbText = crumb;
             accumUrl += "/" + crumbText;
         }
-        console.log("crumbText = " + crumbText);
-        console.log("accumUrl = " + accumUrl);
         li = document.createElement("li");
         link = document.createElement("a");
         link.href = accumUrl;
