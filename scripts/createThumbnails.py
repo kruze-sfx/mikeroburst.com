@@ -8,7 +8,7 @@ import subprocess
 
 import convert_icon_files
 
-CONVERT_CMD = ('convert -limit memory 2048gb -resize "x{height}" '
+CONVERT_CMD = ('convert -limit memory 2048gb -resize "{height}x{height}" '
                '-sharpen 1x1 -compress JPEG -quality 45 '
                '"{source}" "{dest}"')
 ICON_FILE = '_icon.jpg'

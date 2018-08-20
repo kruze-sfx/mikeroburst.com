@@ -29,7 +29,7 @@ DEFAULT_ASPECT_RATIO = 4.0 / 3.0
 
 EXCLUDE_DIRS = frozenset((THUMBS_DIR,))
 
-INDEX_PHOTO_STATEMENT = """INSERT INTO {}
+INDEX_PHOTO_STATEMENT = """REPLACE INTO {}
     (user_path, filename, url, thumb_20_url, thumb_100_url,
      thumb_250_url, thumb_500_url, created_time, width, height, aspect_ratio,
      size, modified_time, exif_fstop, exif_focal_length, exif_iso,
@@ -39,7 +39,7 @@ INDEX_PHOTO_STATEMENT = """INSERT INTO {}
             %s, %s, %s, %s, %s, %s, %s)
     """
 
-INDEX_DIR_STATEMENT = """INSERT INTO {}
+INDEX_DIR_STATEMENT = """REPLACE INTO {}
     (user_path, parent_user_path, name, url, thumb_20_url, thumb_100_url,
      thumb_250_url, thumb_500_url, width, height, aspect_ratio, created_time,
      modified_time, num_subdirs, num_photos)
