@@ -16,6 +16,9 @@ import sys
 
 import exifread
 
+ICON_FILE = '_icon.jpg'
+THUMBNAIL_DIR = '_thumbnail'
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -45,10 +48,6 @@ def get_created_date(filename):
 
 def does_match(candidate, icon_created):
     candidate_created = get_created_date(candidate)
-    #if candidate_created == icon_created:
-    #    print("original {} == candidate {}".format(icon_created, candidate_created))
-    #else:
-    #    print("original {} != candidate {}".format(icon_created, candidate_created))
     if candidate_created is None:
         return False
     else:
@@ -61,21 +60,20 @@ def find_original(icon_file):
     if icon_created is None:
         return None  # Don't try to guess a match if there's no exif.
 
-    # Scan the other files in the same directory and find one with the exact
-    # same created date
+    # Scan the other files in the same directory and its subdirectories and
+    # find one with the exact same created date
     dir_name = os.path.dirname(icon_file) or '.'
-    walk_iter = os.walk(dir_name)
-    try:
-        _, _, files = next(walk_iter)
-    except StopIteration:
-        return None
-    for f in files:
-        candidate = os.path.join(dir_name, f)
-        if candidate == icon_file or f.startswith('.'):
+    for path, dirs, files in os.walk(dir_name):
+        if THUMBNAIL_DIR in path:
             continue
-        print("Checking {}".format(candidate))
-        if does_match(candidate, icon_created):
-            return candidate
+        for f in files:
+            candidate = os.path.join(path, f)
+            if candidate == icon_file or f.startswith('.'):
+                continue
+            print("Checking {}".format(candidate))
+            if does_match(candidate, icon_created):
+                print("Using {}".format(candidate))
+                return candidate
     # If we got this far, there's no match
     return None
 
