@@ -87,7 +87,10 @@ class Querier(object):
         """
         lightbox_info = []
         for photo in photos:
-            date_str = photo.created_time.strftime('%b %m %Y %H:%M:%S')
+            if photo.created_time is not None:
+                date_str = photo.created_time.strftime('%b %m %Y %H:%M:%S')
+            else:
+                date_str = "No date available"
             info = {
                 'src': photo.url,  # required for photoswipe
                 'w': photo.width,  # required for photoswipe

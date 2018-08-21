@@ -67,9 +67,9 @@ def find_original(icon_file):
         if THUMBNAIL_DIR in path:
             continue
         for f in files:
-            candidate = os.path.join(path, f)
-            if candidate == icon_file or f.startswith('.'):
+            if f == ICON_FILE or f.startswith('.'):
                 continue
+            candidate = os.path.join(path, f)
             print("Checking {}".format(candidate))
             if does_match(candidate, icon_created):
                 print("Using {}".format(candidate))

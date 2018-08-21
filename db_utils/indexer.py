@@ -304,10 +304,14 @@ def _convert_exif_timestamp(exif_time):
     '2018-01-01 12:17:12'
     """
     if exif_time != UNDEFINED_STR:
-        dt = datetime.datetime.strptime(exif_time, '%Y:%m:%d %H:%M:%S')
+        try:
+            dt = datetime.datetime.strptime(exif_time, '%Y:%m:%d %H:%M:%S')
+            return dt.strftime('%Y-%m-%d %H:%M:%S')
+        except ValueError as e:
+            print("Replacing {} with None".format(str(exif_time)))
+            return None
     else:
-        dt = datetime.datetime.now()  # TODO: Is that what we want?
-    return dt.strftime('%Y-%m-%d %H:%M:%S')
+        return None
 
 
 def _convert_epoch_timestamp(epoch_time):
