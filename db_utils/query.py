@@ -16,7 +16,7 @@ QUERY_PHOTO_STATEMENT = """SELECT * FROM {} WHERE user_path = %s
     """.format(PHOTOS_TABLE)
 
 QUERY_DIR_STATEMENT = """SELECT * FROM {} WHERE parent_user_path = %s
-    """.format(DIRS_TABLE)
+    ORDER BY name DESC""".format(DIRS_TABLE)
 
 
 class Querier(object):

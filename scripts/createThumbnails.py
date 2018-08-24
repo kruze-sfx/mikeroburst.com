@@ -52,7 +52,7 @@ def get_thumb_path(filename, height, dirname=None):
 def is_valid_image(name_only):
     if name_only == ICON_FILE:
         return False
-    elif not name_only.endswith('jpg'):
+    elif not name_only.lower().endswith('jpg'):
         return False
     else:
         return True
