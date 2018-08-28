@@ -65,7 +65,8 @@ def parse_args():
 
 
 def walk_path(db, path, root):
-    for dirpath, dirnames, filenames in os.walk(path, topdown=True):
+    for dirpath, dirnames, filenames in os.walk(path, topdown=True,
+                                                followlinks=True):
         dirnames[:] = [d for d in dirnames if d not in EXCLUDE_DIRS]
         index_dir(db, root, dirpath, dirnames, filenames)
 

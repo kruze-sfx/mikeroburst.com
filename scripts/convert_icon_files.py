@@ -63,7 +63,7 @@ def find_original(icon_file):
     # Scan the other files in the same directory and its subdirectories and
     # find one with the exact same created date
     dir_name = os.path.dirname(icon_file) or '.'
-    for path, dirs, files in os.walk(dir_name):
+    for path, dirs, files in os.walk(dir_name, followlinks=True):
         if THUMBNAIL_DIR in path:
             continue
         for f in files:
