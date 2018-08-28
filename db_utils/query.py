@@ -12,11 +12,11 @@ IMAGE_TYPE = 'image'
 PHOTOS_TABLE = 'photos'
 
 
-QUERY_PHOTO_STATEMENT = """SELECT * FROM {} WHERE user_path = %s
+QUERY_PHOTO_STATEMENT = """SELECT * FROM {} WHERE user_path = %s {{}}
     """.format(PHOTOS_TABLE)
 
-QUERY_DIR_STATEMENT = """SELECT * FROM {} WHERE parent_user_path = %s
-    ORDER BY name DESC""".format(DIRS_TABLE)
+QUERY_DIR_STATEMENT = """SELECT * FROM {} WHERE parent_user_path = %s {{}}
+    """.format(DIRS_TABLE)
 
 
 class Querier(object):
@@ -65,9 +65,14 @@ class Querier(object):
                 ]
             }
         """
-        self.db.execute(QUERY_PHOTO_STATEMENT, (user_path,))
+        photo_sort = self.get_photo_sort(user_path)
+        photo_statement = QUERY_PHOTO_STATEMENT.format(photo_sort)
+        self.db.execute(photo_statement, (user_path,))
         photos = [record_types.Photo(*p) for p in self.db.fetchall()]
-        self.db.execute(QUERY_DIR_STATEMENT, (user_path,))
+
+        dir_sort = self.get_dir_sort(user_path)
+        dir_statement = QUERY_DIR_STATEMENT.format(dir_sort)
+        self.db.execute(dir_statement, (user_path,))
         dirs = [record_types.Dir(*d) for d in self.db.fetchall()]
 
         lightbox_info = self.get_lightbox_info(photos)
@@ -160,6 +165,24 @@ class Querier(object):
             info.append(photo_info)
 
         return info
+
+    def get_photo_sort(self, user_path):
+        """
+        Gets a string that can be passed to an ORDER BY clause in SQL to
+        control the sort order for photos for a given path.
+        """
+        # Always sort by filename
+        return "ORDER BY filename ASC"
+
+    def get_dir_sort(self, user_path):
+        """
+        Gets a string that can be passed to an ORDER BY clause in SQL to
+        control the sort order for directories for a given path.
+        """
+        if user_path == "/":
+            return "ORDER BY name ASC"
+        else:
+            return "ORDER BY name DESC"
 
 
 def main():
