@@ -26,6 +26,7 @@ PHOTO_URL_ROOT = '/photo'
 DIR_URL_ROOT = '/photos'
 USER_ROOT = '/'
 DEFAULT_ASPECT_RATIO = 4.0 / 3.0
+SQL_TIMESTAMP_FMT = '%Y-%m-%d %H:%M:%S'
 
 EXCLUDE_DIRS = frozenset((THUMBS_DIR,))
 
@@ -47,6 +48,27 @@ INDEX_DIR_STATEMENT = """REPLACE INTO {}
     """
 
 
+GET_DIRS_FOR_SYNC_STATEMENT = """
+    SELECT user_path FROM {} WHERE user_path like "{}%"
+    """
+
+GET_PHOTOS_FOR_SYNC_STATEMENT = """
+    SELECT filename, modified_time FROM {} WHERE user_path = "{}"
+    """
+
+DELETE_DIR_STATEMENT = """
+    DELETE FROM {} WHERE user_path = "{}" 
+    """
+
+DELETE_PHOTO_STATEMENT = """
+    DELETE FROM {} WHERE user_path = "{}" AND filename = "{}"
+    """
+
+DELETE_ALL_PHOTOS_STATEMENT = """
+    DELETE FROM {} WHERE user_path = "{}"
+    """
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--path', help='The directory path to index',
@@ -64,14 +86,29 @@ def parse_args():
     return parser.parse_args()
 
 
-def walk_path(db, path, root):
+def walk_path(db, path, root, for_real):
     for dirpath, dirnames, filenames in os.walk(path, topdown=True,
                                                 followlinks=True):
         dirnames[:] = [d for d in dirnames if d not in EXCLUDE_DIRS]
-        index_dir(db, root, dirpath, dirnames, filenames)
+        index_dir(db, root, dirpath, dirnames, filenames, for_real)
 
 
-def index_dir(db, root, dirpath, dirnames, filenames):
+def get_user_path(path, root):
+    """
+    Gets the path used as the key in the database,
+    e.g. "/2017/2017 08-19 Yosemite"
+    :param path: path on the local disk where the photo or dir
+        is located
+    :param root: path on the local disk that is the root of all
+        photos and dirs
+    """
+    user_path = path.lstrip(root)
+    if not user_path.startswith('/'):
+        user_path = "/{}".format(user_path)
+    return user_path
+
+
+def index_dir(db, root, dirpath, dirnames, filenames, for_real):
     """
     Reference of variable names used here for the example path
     "/photos/albums/2017/2017 08-19 Yosemite"
@@ -81,15 +118,13 @@ def index_dir(db, root, dirpath, dirnames, filenames):
     user_path = "/2017/2017 08-19 Yosemite"
     name = "2017 08-19 Yosemite"
     """
-    user_path = dirpath.lstrip(root)
-    if not user_path.startswith('/'):
-        user_path = "/{}".format(user_path)
+    user_path = get_user_path(dirpath, root)
 
     print("Indexing {}".format(user_path))
 
     # Index all non-thumbnail photos
     for filename in filenames:
-        index_photo(db, user_path, dirpath, filename)
+        index_photo(db, user_path, dirpath, filename, for_real)
 
     # Index the directory itself
     num_subdirs = len([d for d in dirnames if not d.endswith(THUMBS_DIR)])
@@ -109,15 +144,19 @@ def index_dir(db, root, dirpath, dirnames, filenames):
         width=width,
         height=height,
         aspect_ratio=aspect_ratio,
-        created_time=_convert_epoch_timestamp(os.path.getctime(dirpath)),
-        modified_time=_convert_epoch_timestamp(os.path.getmtime(dirpath)),
+        created_time=_epoch_to_sql_timestamp(os.path.getctime(dirpath)),
+        modified_time=_epoch_to_sql_timestamp(os.path.getmtime(dirpath)),
         num_subdirs=num_subdirs,
         num_photos=num_photos,
     )
-    db.execute(INDEX_DIR_STATEMENT.format(DIRS_TABLE), dir_obj)
+    query = INDEX_DIR_STATEMENT.format(DIRS_TABLE)
+    dr = "DRY RUN: " if not for_real else ""
+    print("{}{}".format(dr, query % dir_obj))
+    if for_real:
+        db.execute(query, dir_obj)
 
 
-def index_photo(db, user_path, dirpath, filename):
+def index_photo(db, user_path, dirpath, filename, for_real):
     # Don't index icons
     if filename == ICON_FILE:
         return
@@ -133,7 +172,7 @@ def index_photo(db, user_path, dirpath, filename):
     thumb_urls = get_photo_thumb_urls(user_path, filename)
 
     # Format the modified time as a sql datetime
-    modified_dt = _convert_epoch_timestamp(os.path.getmtime(path))
+    modified_dt = _epoch_to_sql_timestamp(os.path.getmtime(path))
     photo = record_types.Photo(
         user_path=user_path,
         filename=filename,
@@ -158,7 +197,35 @@ def index_photo(db, user_path, dirpath, filename):
         exif_gps_lon=exif.gps_lon,
         exif_gps_alt_ft=exif.gps_alt_ft,
     )
-    db.execute(INDEX_PHOTO_STATEMENT.format(PHOTOS_TABLE), photo)
+    query = INDEX_PHOTO_STATEMENT.format(PHOTOS_TABLE)
+    dr = "DRY RUN: " if not for_real else ""
+    print("{}{}".format(dr, query % photo))
+    if for_real:
+        db.execute(query, photo)
+
+
+def delete_dir(db, user_path, for_real):
+    query = DELETE_DIR_STATEMENT.format(DIRS_TABLE, user_path)
+    dr = "DRY RUN: " if not for_real else ""
+    print("{}{}".format(dr, query))
+    if for_real:
+        db.execute(query)
+
+
+def delete_photo(db, user_path, filename, for_real):
+    query = DELETE_PHOTO_STATEMENT.format(PHOTOS_TABLE, user_path, filename)
+    dr = "DRY RUN: " if not for_real else ""
+    print("{}{}".format(dr, query))
+    if for_real:
+        db.execute(query)
+
+
+def delete_photos_in_dir(db, user_path, for_real):
+    query = DELETE_ALL_PHOTOS_STATEMENT.format(PHOTOS_TABLE, user_path)
+    dr = "DRY RUN: " if not for_real else ""
+    print("{}{}".format(dr, query))
+    if for_real:
+        db.execute(query)
 
 
 def is_image_supported(filename):
@@ -307,7 +374,7 @@ def _convert_exif_timestamp(exif_time):
     if exif_time != UNDEFINED_STR:
         try:
             dt = datetime.datetime.strptime(exif_time, '%Y:%m:%d %H:%M:%S')
-            return dt.strftime('%Y-%m-%d %H:%M:%S')
+            return dt.strftime(SQL_TIMESTAMP_FMT)
         except ValueError as e:
             print("Replacing {} with None".format(str(exif_time)))
             return None
@@ -315,15 +382,28 @@ def _convert_exif_timestamp(exif_time):
         return None
 
 
-def _convert_epoch_timestamp(epoch_time):
+def _epoch_to_sql_timestamp(epoch_time):
     """Converts an epoch timestamp (in seconds) to a sql datetime
 
     For example:
-    >>> _convert_epoch_timestamp(1514963798.0)
+    >>> _epoch_to_sql_timestamp(1514963798.0)
     '2018-01-02 23:16:38'
     """
     return datetime.datetime.fromtimestamp(epoch_time).strftime(
-        '%Y-%m-%d %H:%M:%S')
+        SQL_TIMESTAMP_FMT)
+
+
+def get_dirs_for_sync(db, user_path):
+    db.execute(GET_DIRS_FOR_SYNC_STATEMENT.format(DIRS_TABLE, user_path))
+    return [path for path, in db.fetchall()]
+
+
+def get_photos_for_sync(db, user_path):
+    db.execute(GET_PHOTOS_FOR_SYNC_STATEMENT.format(PHOTOS_TABLE, user_path))
+    photo_times = {}
+    for filename, modified_time in db.fetchall():
+        photo_times[filename] = modified_time.timestamp()
+    return photo_times
 
 
 def mock_execute(query, obj):
@@ -343,7 +423,7 @@ def main():
         conn = mock.Mock()
         db.execute = mock_execute
     try:
-        walk_path(db, args.path, args.root)
+        walk_path(db, args.path, args.root, args.for_real)
     finally:
         conn.commit()
         db.close()
